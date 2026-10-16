@@ -32,7 +32,14 @@ public class Scheduler {
     private static final CopyOnWriteArrayList<ScheduledTask> TASKS = new CopyOnWriteArrayList<>();
 
     public static void init() {
-        ServerTickEvents.END_SERVER_TICK.register(server -> TASKS.removeIf(ScheduledTask::tick));
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            // 遍历快照：任务动作里可能再次 schedule（如白骑士小脑死亡），不能边遍历边改 removeIf
+            for (ScheduledTask task : TASKS) {
+                if (task.tick()) {
+                    TASKS.remove(task);
+                }
+            }
+        });
     }
 
     public static ScheduledTask schedule(Runnable action, int delayTicks) {

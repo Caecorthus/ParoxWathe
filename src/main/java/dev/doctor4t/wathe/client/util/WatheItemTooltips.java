@@ -23,6 +23,7 @@ public class WatheItemTooltips {
     public static final int LETTER_COLOR = 0xC5AE8B;
     public static final int REGULAR_TOOLTIP_COLOR = 0x808080;
 
+    // 旧存档 / 未带颜色的皮肤兜底：按 5 档 tag 翻译 + 上色
     private static final Map<String, Integer> RARITY_COLORS = Map.of(
             "WHITE", 0xA8A29E,
             "GREEN", 0x10B981,
@@ -38,6 +39,25 @@ public class WatheItemTooltips {
             "PURPLE", "tip.skin.rarity.purple",
             "ORANGE", "tip.skin.rarity.orange"
     );
+
+    /** 解析皮肤服务下发的稀有度颜色（#RRGGBB / RRGGBB / 0xRRGGBB / #RGB）；非法返回 -1。 */
+    private static int parseRarityColor(String raw) {
+        if (raw == null) return -1;
+        String s = raw.trim();
+        if (s.startsWith("#")) s = s.substring(1);
+        else if (s.startsWith("0x") || s.startsWith("0X")) s = s.substring(2);
+        if (s.length() == 3) {
+            StringBuilder expanded = new StringBuilder();
+            for (char c : s.toCharArray()) expanded.append(c).append(c);
+            s = expanded.toString();
+        }
+        if (s.length() != 6) return -1;
+        try {
+            return (int) Long.parseLong(s, 16);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
 
     public static void addTooltips() {
         ItemTooltipCallback.EVENT.register((itemStack, tooltipContext, tooltipType, tooltipList) -> {
@@ -76,7 +96,12 @@ public class WatheItemTooltips {
                     tooltipList.add(Text.translatable("tip.skin.failed")
                             .styled(s -> s.withColor(0xFFFF5555)));
                 } else {
-                    int rarityColor = RARITY_COLORS.getOrDefault(skin.rarity(), 0xA8A29E);
+                    // 稀有度颜色：网站下发的自定义色优先；没有（旧数据/未配置）回退旧的 5 档色
+                    int customColor = parseRarityColor(skin.rarityColor());
+                    boolean hasCustomColor = customColor != -1;
+                    int rarityColor = hasCustomColor
+                            ? customColor
+                            : RARITY_COLORS.getOrDefault(skin.rarity(), 0xA8A29E);
                     String rawName = skin.displayName();
 
                     // Only attempt JSON Text parsing if it looks like JSON (object or array);
@@ -93,12 +118,22 @@ public class WatheItemTooltips {
                             .styled(s -> s.withColor(Colors.GRAY))
                             .append(skinName);
 
-                    String rarityKey = RARITY_KEYS.get(skin.rarity());
-                    if (rarityKey != null) {
-                        line = line.copy()
-                                .append(Text.literal(" [").styled(s -> s.withColor(rarityColor)))
-                                .append(Text.translatable(rarityKey).styled(s -> s.withColor(rarityColor)))
-                                .append(Text.literal("]").styled(s -> s.withColor(rarityColor)));
+                    if (hasCustomColor) {
+                        // 网站稀有度：名称原样显示（如「不太常见」），不上翻译键
+                        if (!skin.rarity().isEmpty()) {
+                            line = line.copy()
+                                    .append(Text.literal(" [").styled(s -> s.withColor(rarityColor)))
+                                    .append(Text.literal(skin.rarity()).styled(s -> s.withColor(rarityColor)))
+                                    .append(Text.literal("]").styled(s -> s.withColor(rarityColor)));
+                        }
+                    } else {
+                        String rarityKey = RARITY_KEYS.get(skin.rarity());
+                        if (rarityKey != null) {
+                            line = line.copy()
+                                    .append(Text.literal(" [").styled(s -> s.withColor(rarityColor)))
+                                    .append(Text.translatable(rarityKey).styled(s -> s.withColor(rarityColor)))
+                                    .append(Text.literal("]").styled(s -> s.withColor(rarityColor)));
+                        }
                     }
 
                     tooltipList.add(line);

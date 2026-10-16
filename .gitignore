@@ -5,6 +5,11 @@ build/
 out/
 classes/
 
+# local
+
+.claude/
+docs/
+
 # eclipse
 
 *.launch

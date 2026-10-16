@@ -27,6 +27,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
+/**
+ * Renders item stacks carrying a {@code wathe:skin} component with dynamically generated
+ * quads instead of the vanilla model. Falls back to vanilla rendering while the texture
+ * is loading or after it failed. See docs/skin-system.md.
+ */
 @Mixin(ItemRenderer.class)
 public class SkinItemRendererMixin {
     @Shadow

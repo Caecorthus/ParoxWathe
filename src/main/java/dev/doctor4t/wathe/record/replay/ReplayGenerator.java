@@ -79,8 +79,9 @@ public final class ReplayGenerator {
 
     /**
      * 生成回放文本行
+     * <p>public 供 wathe-replay-upload 模组导出纯文本回放；调用必须在游戏线程、对局记录失效前完成。</p>
      */
-    private static List<Text> generateReplayLines(GameRecordManager.MatchRecord match, ServerWorld world, Map<UUID, PlayerInfo> playerInfoCache) {
+    public static List<Text> generateReplayLines(GameRecordManager.MatchRecord match, ServerWorld world, Map<UUID, PlayerInfo> playerInfoCache) {
         List<Text> lines = new ArrayList<>();
         long startTick = match.getStartTick();
 

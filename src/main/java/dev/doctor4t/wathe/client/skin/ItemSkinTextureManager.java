@@ -10,6 +10,8 @@ import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -23,12 +25,24 @@ import java.util.HexFormat;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Client-side texture pipeline for item skins: downloads the PNG referenced by a
+ * {@code wathe:skin} component, caches it on disk and registers it as a GPU texture.
+ * Source-agnostic — any provider can feed texture URLs; see docs/skin-system.md.
+ */
 public class ItemSkinTextureManager {
     private static final ItemSkinTextureManager INSTANCE = new ItemSkinTextureManager();
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
             .build();
+
+    /** 只下载皮肤服务（ParoxSite）下发的贴图域名；组件内容不可信（公开服安全，见 docs/skin-system.md） */
+    private static final String ALLOWED_TEXTURE_HOST = "parox.luoyuewu.com";
+    /** 单张贴图字节上限：像素皮肤实际只有几 KB */
+    private static final int MAX_TEXTURE_BYTES = 1024 * 1024;
+    /** 解码后像素数上限（2048×2048），防「小文件大图」的解压炸弹 */
+    private static final long MAX_TEXTURE_PIXELS = 2048L * 2048L;
 
     public enum TextureState { LOADING, READY, FAILED }
 
@@ -108,18 +122,25 @@ public class ItemSkinTextureManager {
                     return Files.readAllBytes(cachedFile);
                 }
 
+                URI uri = URI.create(textureUrl);
+                if (!ALLOWED_TEXTURE_HOST.equalsIgnoreCase(uri.getHost())) {
+                    throw new RuntimeException("texture host not allowed: " + uri.getHost());
+                }
+
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(textureUrl))
+                        .uri(uri)
                         .timeout(Duration.ofSeconds(10))
                         .GET()
                         .build();
 
-                HttpResponse<byte[]> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                HttpResponse<InputStream> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
                 if (response.statusCode() != 200) {
                     throw new RuntimeException("HTTP " + response.statusCode());
                 }
 
-                byte[] bytes = response.body();
+                // 边读边计数限流（ofByteArray 会先把整包读进内存，上限形同虚设）
+                byte[] bytes = readCapped(response.body(), MAX_TEXTURE_BYTES);
+                checkPixelSize(bytes);
                 Files.write(cachedFile, bytes);
                 return bytes;
             } catch (Exception e) {
@@ -173,6 +194,41 @@ public class ItemSkinTextureManager {
             return HexFormat.of().formatHex(hash);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /** 流式读取并限制字节数：超限直接失败，防止超大响应把内存打满 */
+    private static byte[] readCapped(InputStream stream, int cap) throws IOException {
+        try (stream; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int total = 0;
+            int read;
+            while ((read = stream.read(buffer)) != -1) {
+                total += read;
+                if (total > cap) {
+                    throw new IOException("texture too large (> " + cap + " bytes)");
+                }
+                out.write(buffer, 0, read);
+            }
+            return out.toByteArray();
+        }
+    }
+
+    /** 解码前从 PNG 头读宽高：NativeImage.read 会按 w*h*4 分配内存，先挡住解压炸弹 */
+    private static void checkPixelSize(byte[] bytes) throws IOException {
+        if (bytes.length < 24) {
+            throw new IOException("not a PNG (too short)");
+        }
+        // 8 字节签名 + 4 字节块长度 + "IHDR" → 宽高在 16..23（大端）
+        if ((bytes[0] & 0xFF) != 0x89 || bytes[1] != 'P' || bytes[2] != 'N' || bytes[3] != 'G') {
+            throw new IOException("not a PNG");
+        }
+        long width = ((bytes[16] & 0xFFL) << 24) | ((bytes[17] & 0xFFL) << 16)
+                | ((bytes[18] & 0xFFL) << 8) | (bytes[19] & 0xFFL);
+        long height = ((bytes[20] & 0xFFL) << 24) | ((bytes[21] & 0xFFL) << 16)
+                | ((bytes[22] & 0xFFL) << 8) | (bytes[23] & 0xFFL);
+        if (width <= 0 || height <= 0 || width * height > MAX_TEXTURE_PIXELS) {
+            throw new IOException("texture too large: " + width + "x" + height);
         }
     }
 }

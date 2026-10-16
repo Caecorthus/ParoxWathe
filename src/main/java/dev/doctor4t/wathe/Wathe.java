@@ -2,9 +2,6 @@ package dev.doctor4t.wathe;
 
 import com.google.common.reflect.Reflection;
 import dev.doctor4t.wathe.block.DoorPartBlock;
-import dev.doctor4t.wathe.block.GlassPanelBlock;
-import dev.doctor4t.wathe.block.PrivacyBlock;
-import dev.doctor4t.wathe.block.WalkwayBlock;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.MapVariablesWorldComponent;
 import dev.doctor4t.wathe.cca.MapVotingComponent;
@@ -14,11 +11,12 @@ import dev.doctor4t.wathe.command.argument.MapEffectArgumentType;
 import dev.doctor4t.wathe.command.argument.TimeOfDayArgumentType;
 import dev.doctor4t.wathe.compat.TrainVoicePlugin;
 import dev.doctor4t.wathe.config.datapack.MapEnhancementsConfigurationReloader;
+import dev.doctor4t.wathe.cosmetic.CosmeticApiClient;
+import dev.doctor4t.wathe.cosmetic.CosmeticDataCache;
 import dev.doctor4t.wathe.api.event.WatheEventHandlers;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.index.*;
-import dev.doctor4t.wathe.index.tag.WatheBlockTags;
 import dev.doctor4t.wathe.network.VersionCheckConfigurationTask;
 import dev.doctor4t.wathe.network.VersionCheckPayload;
 import dev.doctor4t.wathe.record.GameRecordHooks;
@@ -28,8 +26,6 @@ import dev.doctor4t.wathe.record.replay.DefaultReplayFormatters;
 import dev.doctor4t.wathe.record.replay.ReplayGenerator;
 import dev.doctor4t.wathe.record.replay.ReplayRegistry;
 import dev.doctor4t.wathe.api.event.RecordEvents;
-import dev.doctor4t.wathe.cosmetic.CosmeticApiClient;
-import dev.doctor4t.wathe.cosmetic.CosmeticDataCache;
 import dev.doctor4t.wathe.util.*;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
@@ -40,9 +36,9 @@ import net.fabricmc.fabric.api.networking.v1.ServerConfigurationConnectionEvents
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBlockTags;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -204,12 +200,14 @@ public class Wathe implements ModInitializer {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             GameRecordManager.recordPlayerJoin(handler.getPlayer());
 
-            // 异步拉取该玩家的皮肤数据并缓存
+            // 皮肤来源：进服时异步拉取该玩家装备的皮肤并缓存（自建服务，见 docs/skin-system.md）。
+            // 只在进服拉一次（降低服务负载）；网站上换装后重进服务器生效。
             UUID skinUuid = handler.getPlayer().getUuid();
-            CosmeticApiClient.fetchPlayerCosmetics(skinUuid).thenAccept(cosmetics -> {
+            CosmeticApiClient.fetchPlayerSkins(skinUuid).thenAccept(skins -> {
                 server.execute(() -> {
-                    if (!cosmetics.isEmpty()) {
-                        CosmeticDataCache.update(skinUuid, cosmetics);
+                    // 响应回来时玩家可能已断线：别再写入，避免缓存泄漏
+                    if (!skins.isEmpty() && server.getPlayerManager().getPlayer(skinUuid) != null) {
+                        CosmeticDataCache.update(skinUuid, skins);
                     }
                 });
             });
@@ -300,13 +298,15 @@ public class Wathe implements ModInitializer {
         Scheduler.init();
     }
 
+    // 露天判定保留本分支实现：main 版（isSkyVisible || hasPassableSkyPath）的 hasPassableSkyPath
+    // 在扫描到不可透光方块时返回 true 且调用处未取反，密闭空间会被误判为露天；合并 main 时不要覆盖此段。
     public static boolean isSkyVisibleAdjacent(@NotNull Entity player) {
         BlockPos.Mutable mutable = new BlockPos.Mutable();
         BlockPos playerPos = BlockPos.ofFloored(player.getEyePos());
         for (int x = -1; x <= 1; x += 2) {
             for (int z = -1; z <= 1; z += 2) {
                 mutable.set(playerPos.getX() + x, playerPos.getY(), playerPos.getZ() + z);
-                if (player.getWorld().isSkyVisible(mutable) || hasPassableSkyPath(player, mutable)) {
+                if (!hasBlockAbove(player, mutable)) {
                     return !(player.getWorld().getBlockState(playerPos).getBlock() instanceof DoorPartBlock);
                 }
             }
@@ -314,10 +314,10 @@ public class Wathe implements ModInitializer {
         return false;
     }
 
-    private static boolean hasPassableSkyPath(@NotNull Entity entity, @NotNull BlockPos pos) {
+    private static boolean hasBlockAbove(@NotNull Entity entity, @NotNull BlockPos pos) {
         BlockPos.Mutable mutable = new BlockPos.Mutable();
         int topY = entity.getWorld().getTopY() - 1;
-        for (int y = pos.getY(); y <= topY; y++) {
+        for (int y = pos.getY() + 1; y <= topY; y++) {
             mutable.set(pos.getX(), y, pos.getZ());
             BlockState state = entity.getWorld().getBlockState(mutable);
             if (!canPassSkyVisibility(state)) {
@@ -328,21 +328,29 @@ public class Wathe implements ModInitializer {
     }
 
     private static boolean canPassSkyVisibility(@NotNull BlockState state) {
-        if (state.getBlock() instanceof PrivacyBlock
-                && state.contains(PrivacyBlock.OPAQUE)
-                && state.get(PrivacyBlock.OPAQUE)) {
-            return false;
-        }
-
         return state.isAir()
-                || state.isIn(WatheBlockTags.WALKWAYS)
-                || state.isIn(ConventionalBlockTags.GLASS_BLOCKS)
-                || state.isIn(ConventionalBlockTags.GLASS_PANES)
-                || state.getBlock() instanceof GlassPanelBlock
-                || state.getBlock() instanceof WalkwayBlock
-                || state.isOf(WatheBlocks.HULL_GLASS)
-                || state.isOf(WatheBlocks.RHOMBUS_HULL_GLASS)
-                || state.isOf(WatheBlocks.RHOMBUS_GLASS);
+                || isVanillaGlassBlock(state)
+                || state.isOf(WatheBlocks.STAINLESS_STEEL_WALKWAY);
+    }
+
+    private static boolean isVanillaGlassBlock(@NotNull BlockState state) {
+        return state.isOf(Blocks.GLASS)
+                || state.isOf(Blocks.WHITE_STAINED_GLASS)
+                || state.isOf(Blocks.LIGHT_GRAY_STAINED_GLASS)
+                || state.isOf(Blocks.GRAY_STAINED_GLASS)
+                || state.isOf(Blocks.BLACK_STAINED_GLASS)
+                || state.isOf(Blocks.BROWN_STAINED_GLASS)
+                || state.isOf(Blocks.RED_STAINED_GLASS)
+                || state.isOf(Blocks.ORANGE_STAINED_GLASS)
+                || state.isOf(Blocks.YELLOW_STAINED_GLASS)
+                || state.isOf(Blocks.LIME_STAINED_GLASS)
+                || state.isOf(Blocks.GREEN_STAINED_GLASS)
+                || state.isOf(Blocks.CYAN_STAINED_GLASS)
+                || state.isOf(Blocks.LIGHT_BLUE_STAINED_GLASS)
+                || state.isOf(Blocks.BLUE_STAINED_GLASS)
+                || state.isOf(Blocks.PURPLE_STAINED_GLASS)
+                || state.isOf(Blocks.MAGENTA_STAINED_GLASS)
+                || state.isOf(Blocks.PINK_STAINED_GLASS);
     }
 
     public static boolean isExposedToWind(@NotNull Entity player) {
