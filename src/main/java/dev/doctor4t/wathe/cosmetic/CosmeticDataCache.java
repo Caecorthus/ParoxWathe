@@ -8,6 +8,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 服务端皮肤缓存：玩家 uuid → 「物品注册 ID → 皮肤组件」。
+ * 进服时由 {@link CosmeticApiClient} 写入，断线清理；背包应用逻辑（PlayerInventoryMixin）只读。
+ */
 public class CosmeticDataCache {
     private static final ConcurrentHashMap<UUID, Map<Identifier, CosmeticComponent>> cache = new ConcurrentHashMap<>();
 

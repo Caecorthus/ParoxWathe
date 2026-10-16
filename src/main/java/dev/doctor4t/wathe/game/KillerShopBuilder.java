@@ -70,8 +70,8 @@ public class KillerShopBuilder {
     }
 
     private static void addTools(BuildShopEntries.ShopContext context) {
-        // 便签: 10, 无限制 (4个一组)
-        context.addEntry(new ShopEntry.Builder("note", new ItemStack(WatheItems.NOTE, 4), 10, ShopEntry.Type.TOOL)
+        // 便签: 0, 无限制 (4个一组)
+        context.addEntry(new ShopEntry.Builder("note", new ItemStack(WatheItems.NOTE, 4), 0, ShopEntry.Type.TOOL)
             .build());
 
         // 开锁器: 50, 库存1

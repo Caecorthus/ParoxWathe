@@ -3,10 +3,10 @@ package dev.doctor4t.wathe.mixin;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import dev.doctor4t.wathe.cca.PlayerPsychoComponent;
+import dev.doctor4t.wathe.cosmetic.CosmeticDataCache;
 import dev.doctor4t.wathe.index.WatheDataComponentTypes;
 import dev.doctor4t.wathe.index.WatheItems;
 import dev.doctor4t.wathe.item.component.CosmeticComponent;
-import dev.doctor4t.wathe.cosmetic.CosmeticDataCache;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -34,9 +34,14 @@ public class PlayerInventoryMixin {
     @Final
     private List<DefaultedList<ItemStack>> combinedInventory;
 
+    /**
+     * 皮肤应用：每 tick 扫一遍背包，没有皮肤的物品按玩家装备打上 {@code wathe:skin} 组件
+     * （只增不覆盖——已有皮肤的物品保持不变，捡到的他人物品不会被换皮）。
+     * 物品在谁背包里就按谁的皮肤；服务端权威，组件走原版同步。
+     */
     @Inject(method = "updateItems", at = @At("HEAD"))
     private void wathe$assignSkinData(CallbackInfo ci) {
-        if (this.player.getWorld().isClient) return;
+        if (this.player.getWorld().isClient) return;   // updateItems 双端都会调用，只处理服务端
 
         Map<Identifier, CosmeticComponent> playerCosmetics = CosmeticDataCache.getPlayerCosmetics(this.player.getUuid());
         if (playerCosmetics == null) return;

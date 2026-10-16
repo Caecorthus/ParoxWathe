@@ -15,12 +15,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * @param cosmeticId  skin identifier; {@code "default"} means "no skin" and is skipped by renderer, tooltip and grenade propagation
  * @param displayName Minecraft Raw JSON Text, parsed via {@link net.minecraft.text.Text.Serialization#fromJson}
+ * @param rarity      rarity display name from the skin service (e.g. 中文稀有度名)；legacy values WHITE/GREEN/BLUE/PURPLE/ORANGE are still
+ *                    mapped to the old 5-tier translation keys when {@code rarityColor} is empty (see WatheItemTooltips)
+ * @param textureUrl  PNG url consumed by the client texture pipeline (ItemSkinTextureManager)
  * @param resources   JSON string containing named textures and optional custom data.
  *                    Structure: {"textures": {"key": "url", ...}, "data": {...}}
  *                    Empty string if no extra resources.
+ * @param rarityColor hex colour (e.g. {@code #8000ff}) for the tooltip rarity line, served by the skin service;
+ *                    empty string falls back to the legacy 5-tier colours
  */
-public record CosmeticComponent(String cosmeticId, String displayName, String rarity, String textureUrl, String resources) {
+public record CosmeticComponent(String cosmeticId, String displayName, String rarity, String textureUrl, String resources, String rarityColor) {
     private static final Gson GSON = new Gson();
 
     /**
@@ -80,7 +86,7 @@ public record CosmeticComponent(String cosmeticId, String displayName, String ra
      * e.g. setting the thrown grenade's active texture).
      */
     public CosmeticComponent withTextureUrl(String newTextureUrl) {
-        return new CosmeticComponent(cosmeticId, displayName, rarity, newTextureUrl, resources);
+        return new CosmeticComponent(cosmeticId, displayName, rarity, newTextureUrl, resources, rarityColor);
     }
 
     public static final Codec<CosmeticComponent> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -88,7 +94,8 @@ public record CosmeticComponent(String cosmeticId, String displayName, String ra
             Codec.STRING.fieldOf("displayName").forGetter(CosmeticComponent::displayName),
             Codec.STRING.fieldOf("rarity").forGetter(CosmeticComponent::rarity),
             Codec.STRING.fieldOf("textureUrl").forGetter(CosmeticComponent::textureUrl),
-            Codec.STRING.optionalFieldOf("resources", "").forGetter(CosmeticComponent::resources)
+            Codec.STRING.optionalFieldOf("resources", "").forGetter(CosmeticComponent::resources),
+            Codec.STRING.optionalFieldOf("rarityColor", "").forGetter(CosmeticComponent::rarityColor)
     ).apply(instance, CosmeticComponent::new));
 
     public static final PacketCodec<PacketByteBuf, CosmeticComponent> PACKET_CODEC = PacketCodec.tuple(
@@ -97,6 +104,7 @@ public record CosmeticComponent(String cosmeticId, String displayName, String ra
             PacketCodecs.STRING, CosmeticComponent::rarity,
             PacketCodecs.STRING, CosmeticComponent::textureUrl,
             PacketCodecs.STRING, CosmeticComponent::resources,
+            PacketCodecs.STRING, CosmeticComponent::rarityColor,
             CosmeticComponent::new
     );
 }
