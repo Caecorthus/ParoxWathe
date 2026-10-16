@@ -6,6 +6,7 @@
   "mixins": [
     "AbstractBlockInvoker",
     "AbstractBlockSettingsMixin",
+    "AbstractSignBlockMixin",
     "DedicatedPlayerManagerMixin",
     "EntityMixin",
     "FarmlandBlockMixin",
