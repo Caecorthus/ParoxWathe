@@ -3,6 +3,7 @@ package dev.doctor4t.wathe.mixin.client;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import dev.doctor4t.wathe.client.WatheClient;
 import dev.doctor4t.wathe.index.WatheItems;
+import dev.doctor4t.wathe.util.InvisibleItemUtils;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
@@ -27,9 +28,9 @@ public class PlayerEntityRendererMixin {
     }
 
     @ModifyExpressionValue(method = "getArmPose", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getStackInHand(Lnet/minecraft/util/Hand;)Lnet/minecraft/item/ItemStack;"))
-    private static ItemStack wathe$changeNoteAndPsychosisItemsArmPos(ItemStack original, AbstractClientPlayerEntity player, Hand hand) {
+    private static ItemStack wathe$changeInvisibleAndPsychosisItemsArmPos(ItemStack original, AbstractClientPlayerEntity player, Hand hand) {
         if (hand.equals(Hand.MAIN_HAND) && !player.isInvisible()) {
-            if (original.isOf(WatheItems.NOTE)) {
+            if (InvisibleItemUtils.isInvisibleInHand(original)) {
                 return ItemStack.EMPTY;
             }
 

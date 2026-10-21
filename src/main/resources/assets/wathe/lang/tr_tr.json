@@ -290,7 +290,7 @@
   "item.wathe.champagne": "Şampanya",
   "item.wathe.cosmopolitan": "Cosmopolitan Kokteyl",
   "item.wathe.crowbar": "Levye",
-  "item.wathe.crowbar.tooltip": "Herhangi bir kapıyı kalıcı olarak açmak için kullanılır",
+  "item.wathe.crowbar.tooltip": "Herhangi bir kapıyı kalıcı olarak açmak için kullanılır\nEldeyken görünmez",
 
   "item.wathe.derringer": "Derringer Tabanca",
   "item.wathe.derringer.tooltip": "Nişan alın, sağ tıklayın ve ateş edin\nYalnızca bir atış hakkınız var, hedefi ıskalamayın!\nHer düşman öldürüldüğünde mermi yenilenir",
@@ -309,7 +309,7 @@
   "item.wathe.letter": "Mektup",
 
   "item.wathe.lockpick": "Kilit Açma Aleti",
-  "item.wathe.lockpick.tooltip": "Kilitli kapıları açmak için kullanılır (bekleme süresi yok)\nGizlice kullanılarak kapı 1 dakika boyunca kilitlenir (3 dakika bekleme süresi)",
+  "item.wathe.lockpick.tooltip": "Kilitli kapıları açmak için kullanılır (bekleme süresi yok)\nGizlice kullanılarak kapı 1 dakika boyunca kilitlenir (3 dakika bekleme süresi)\nEldeyken görünmez",
 
   "item.wathe.martini": "Martini",
   "item.wathe.mojito": "Mojito",

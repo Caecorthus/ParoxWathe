@@ -299,7 +299,7 @@
   "item.wathe.champagne": "香檳",
   "item.wathe.cosmopolitan": "大都會雞尾酒",
   "item.wathe.crowbar": "撬棍",
-  "item.wathe.crowbar.tooltip": "用於任意門，可將其永久撬開",
+  "item.wathe.crowbar.tooltip": "用於任意門，可將其永久撬開\n手持時不可見",
 
   "item.wathe.derringer": "德林加手槍",
   "item.wathe.derringer.tooltip": "瞄準、右鍵點擊並射擊\n僅能射擊一次，務必精準命中！\n每次擊殺敵人後補充一發彈藥",
@@ -318,7 +318,7 @@
   "item.wathe.letter": "信件",
 
   "item.wathe.lockpick": "開鎖器",
-  "item.wathe.lockpick.tooltip": "用於任意上鎖的門將其打開（無冷卻）\n潛行使用可將門堵死 1 分鐘（冷卻 3 分鐘）",
+  "item.wathe.lockpick.tooltip": "用於任意上鎖的門將其打開（無冷卻）\n潛行使用可將門堵死 1 分鐘（冷卻 3 分鐘）\n手持時不可見",
 
   "item.wathe.martini": "馬提尼",
   "item.wathe.mojito": "莫吉托",
