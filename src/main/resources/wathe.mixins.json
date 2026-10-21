@@ -9,6 +9,7 @@
     "AbstractSignBlockMixin",
     "DedicatedPlayerManagerMixin",
     "EntityMixin",
+    "EntityTrackerEntryMixin",
     "FarmlandBlockMixin",
     "HungerManagerMixin",
     "ItemEntityMixin",

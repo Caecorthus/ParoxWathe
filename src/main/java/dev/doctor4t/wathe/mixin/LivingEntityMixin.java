@@ -1,5 +1,6 @@
 package dev.doctor4t.wathe.mixin;
 
+import com.mojang.datafixers.util.Pair;
 import dev.doctor4t.wathe.Wathe;
 import dev.doctor4t.wathe.api.event.AllowPlayerPunching;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
@@ -8,12 +9,15 @@ import dev.doctor4t.wathe.config.datapack.MapEnhancementsConfiguration.GravityCo
 import dev.doctor4t.wathe.config.datapack.MapEnhancementsConfiguration.JumpConfig;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.index.WatheItems;
+import dev.doctor4t.wathe.util.InvisibleItemUtils;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.sound.SoundEvent;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +26,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.List;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends EntityMixin {
@@ -103,6 +110,12 @@ public abstract class LivingEntityMixin extends EntityMixin {
                 }
             }
         }
+    }
+
+    // 服务端广播装备变化时隐藏手持不可视道具，其他玩家只会收到空手
+    @ModifyArg(method = "sendEquipmentChanges(Ljava/util/Map;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/EntityEquipmentUpdateS2CPacket;<init>(ILjava/util/List;)V"), index = 1)
+    private List<Pair<EquipmentSlot, ItemStack>> wathe$hideInvisibleHeldItems(List<Pair<EquipmentSlot, ItemStack>> equipment) {
+        return InvisibleItemUtils.hideFromEquipmentSync((LivingEntity) (Object) this, equipment);
     }
 
     @Unique

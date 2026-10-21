@@ -127,8 +127,8 @@ public class WatheLangGen extends FabricLanguageProvider {
         builder.add(TextUtils.getItemTranslationKey(WatheItems.POISON_VIAL) + ".tooltip", "Slip in food or drinks to poison the next pickup");
         builder.add(TextUtils.getItemTranslationKey(WatheItems.FIRECRACKER) + ".tooltip", "Detonates 15 seconds after being placed on ground\nGood to simulate gunshots and lure people");
         builder.add(TextUtils.getItemTranslationKey(WatheItems.SCORPION) + ".tooltip", "Slip in a bed to poison the next person looking for a rest");
-        builder.add(TextUtils.getItemTranslationKey(WatheItems.LOCKPICK) + ".tooltip", "Use on any locked door to open it (no cooldown)\nSneak-use on a door to jam it for 1 minute (3 minute cooldown)");
-        builder.add(TextUtils.getItemTranslationKey(WatheItems.CROWBAR) + ".tooltip", "Use on any door to open it permanently");
+        builder.add(TextUtils.getItemTranslationKey(WatheItems.LOCKPICK) + ".tooltip", "Use on any locked door to open it (no cooldown)\nSneak-use on a door to jam it for 1 minute (3 minute cooldown)\nInvisible in hand");
+        builder.add(TextUtils.getItemTranslationKey(WatheItems.CROWBAR) + ".tooltip", "Use on any door to open it permanently\nInvisible in hand");
         builder.add(TextUtils.getItemTranslationKey(WatheItems.BODY_BAG) + ".tooltip", "Use on a dead body to bag it up and remove it\nSingle use, 5 minute cooldown");
         builder.add(TextUtils.getItemTranslationKey(WatheItems.BLACKOUT) + ".tooltip", "Turn off all lights aboard for 15 to 20 seconds\nUse your instinct [left-alt] to see your targets in the dark\nActivated instantly on purchase, 5 minute cooldown");
         builder.add(TextUtils.getItemTranslationKey(WatheItems.NOTE) + ".tooltip", "Write a message and pin it for others to see\nSneak-use to write a message, then use on a wall or floor to place\nInvisible in hand");

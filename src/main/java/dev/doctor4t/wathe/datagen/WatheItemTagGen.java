@@ -30,8 +30,11 @@ public class WatheItemTagGen extends FabricTagProvider.ItemTagProvider {
                 .add(WatheItems.GRENADE)
                 .add(WatheItems.POISON_VIAL)
                 .add(WatheItems.SCORPION)
-                .add(WatheItems.LOCKPICK)
-                .add(WatheItems.CROWBAR)
                 .add(WatheItems.BODY_BAG);
+
+        this.getOrCreateTagBuilder(WatheItemTags.INVISIBLE_IN_HAND)
+                .add(WatheItems.NOTE)
+                .add(WatheItems.LOCKPICK)
+                .add(WatheItems.CROWBAR);
     }
 }
