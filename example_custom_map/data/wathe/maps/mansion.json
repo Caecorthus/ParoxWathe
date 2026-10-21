@@ -2,7 +2,7 @@
   "_comment": "=== Wathe 多地图配置示例 - 庄园（展示全部游戏参数配置） ===",
   "_comment_usage": "这是一个展示所有新增游戏参数配置的示例",
   "_comment_movement": "movement: 移动速度倍率，1.0 为默认速度（行走 0.07f / 疾跑 0.1f）",
-  "_comment_jump": "jump: allowed=true 允许跳跃, stamina_cost>0 每次跳跃消耗体力",
+  "_comment_jump": "jump: allowed=true 允许跳跃",
   "_comment_ambience": "ambience: inside_sound/outside_sound 配置室内/室外环境音（默认为列车音效），设为空字符串 '' 可关闭",
   "_comment_gravity": "gravity: 重力倍率，1.0 为默认重力（0.08），0.5 为半重力（月球），2.0 为双倍重力",
   "_comment_ambience2": "require_train_moving: 默认 true（列车地图），非列车地图需设为 false 才能播放环境音",
@@ -26,8 +26,7 @@
     },
 
     "jump": {
-      "allowed": true,
-      "stamina_cost": 20
+      "allowed": true
     },
 
     "ambience": {

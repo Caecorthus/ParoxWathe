@@ -2,7 +2,6 @@ package dev.doctor4t.wathe.mixin.client.restrictions;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import dev.doctor4t.wathe.cca.MapEnhancementsWorldComponent;
-import dev.doctor4t.wathe.cca.PlayerStaminaComponent;
 import dev.doctor4t.wathe.client.WatheClient;
 import dev.doctor4t.wathe.config.datapack.MapEnhancementsConfiguration.JumpConfig;
 import dev.doctor4t.wathe.game.GameFunctions;
@@ -36,11 +35,6 @@ public abstract class KeyBindingMixin {
                 JumpConfig jumpConfig = WatheClient.mapEnhancementsWorldComponent.getJumpConfig();
                 if (!jumpConfig.allowed()) {
                     result = this.equals(jumpKey);
-                } else if (jumpConfig.staminaCost() > 0 && this.equals(jumpKey) && player != null) {
-                    PlayerStaminaComponent stamina = PlayerStaminaComponent.KEY.get(player);
-                    if (!stamina.isInfiniteStamina()) {
-                        result = stamina.getSprintingTicks() < jumpConfig.staminaCost();
-                    }
                 }
             } else {
                 result = this.equals(jumpKey);
