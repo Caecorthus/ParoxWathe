@@ -247,10 +247,7 @@ public class MapEnhancementsWorldComponent implements AutoSyncedComponent {
         }
         // 反序列化跳跃配置
         if (tag.contains("jumpAllowed")) {
-            this.syncedJump = new JumpConfig(
-                tag.getBoolean("jumpAllowed"),
-                tag.getFloat("jumpStaminaCost")
-            );
+            this.syncedJump = new JumpConfig(tag.getBoolean("jumpAllowed"));
         }
         // 反序列化环境音配置
         if (tag.contains("ambienceInsideSound")) {
@@ -316,7 +313,6 @@ public class MapEnhancementsWorldComponent implements AutoSyncedComponent {
         // 序列化跳跃配置
         JumpConfig jump = getJumpConfig();
         tag.putBoolean("jumpAllowed", jump.allowed());
-        tag.putFloat("jumpStaminaCost", jump.staminaCost());
 
         // 序列化环境音配置
         AmbienceConfig ambience = getAmbienceConfig();

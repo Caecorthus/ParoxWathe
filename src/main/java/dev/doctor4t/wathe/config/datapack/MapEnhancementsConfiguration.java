@@ -166,12 +166,11 @@ public record MapEnhancementsConfiguration(
     /**
      * 跳跃配置
      */
-    public record JumpConfig(boolean allowed, float staminaCost) {
-        public static final JumpConfig DEFAULT = new JumpConfig(false, 0f);
+    public record JumpConfig(boolean allowed) {
+        public static final JumpConfig DEFAULT = new JumpConfig(false);
 
         public static final Codec<JumpConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.BOOL.optionalFieldOf("allowed", false).forGetter(JumpConfig::allowed),
-            Codec.FLOAT.optionalFieldOf("stamina_cost", 0f).forGetter(JumpConfig::staminaCost)
+            Codec.BOOL.optionalFieldOf("allowed", false).forGetter(JumpConfig::allowed)
         ).apply(instance, JumpConfig::new));
     }
 

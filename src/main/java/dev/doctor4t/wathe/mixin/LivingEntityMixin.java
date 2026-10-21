@@ -4,7 +4,6 @@ import dev.doctor4t.wathe.Wathe;
 import dev.doctor4t.wathe.api.event.AllowPlayerPunching;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.MapEnhancementsWorldComponent;
-import dev.doctor4t.wathe.cca.PlayerStaminaComponent;
 import dev.doctor4t.wathe.config.datapack.MapEnhancementsConfiguration.GravityConfig;
 import dev.doctor4t.wathe.config.datapack.MapEnhancementsConfiguration.JumpConfig;
 import dev.doctor4t.wathe.game.GameFunctions;
@@ -99,20 +98,8 @@ public abstract class LivingEntityMixin extends EntityMixin {
                     if (!jumpConfig.allowed()) {
                         // 不允许跳跃
                         ci.cancel();
-                    } else if (jumpConfig.staminaCost() > 0) {
-                        // 允许跳跃但消耗体力
-                        PlayerStaminaComponent stamina = PlayerStaminaComponent.KEY.get(player);
-                        if (stamina.isInfiniteStamina()) {
-                            // 无限体力，允许跳跃且不消耗体力
-                        } else if (stamina.getSprintingTicks() < jumpConfig.staminaCost()) {
-                            // 体力不足，取消跳跃
-                            ci.cancel();
-                        } else {
-                            // 扣除体力
-                            stamina.setSprintingTicks(stamina.getSprintingTicks() - jumpConfig.staminaCost());
-                        }
                     }
-                    // allowed=true 且 staminaCost=0 → 自由跳跃，不取消
+                    // allowed=true → 自由跳跃，不取消
                 }
             }
         }
